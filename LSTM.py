@@ -1,0 +1,46 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import copy
+import torch
+from torch import nn
+import torch.nn.functional as F
+import torch.optim as optim
+import torchvision
+import torch.utils.data as Data
+from torchvision import transforms
+
+from Dataset import mydataset
+
+
+class lstmmodel(nn.Module):
+    def __init__(self, input_dim, hidden_dim, layer_dim, output_dim):
+        """
+        input_dim: 每个输入xi的维度
+        hidden_dim: 词向量嵌入变换的维度，也就是W的行数
+        layer_dim: RNN神经元的层数
+        output_dim: 最后线性变换后词向量的维度
+        """
+        super(lstmmodel, self).__init__()
+        self.lstm = nn.LSTM(
+            input_size=input_dim,
+            hidden_size=hidden_dim,
+            num_layers=layer_dim,
+            batch_first=True
+        )
+        self.fc1 = nn.Linear(hidden_dim, output_dim)
+
+    def forward(self, x):
+        """
+        维度说明：
+            time_step = sum(像素数) / input_dim
+            x : [batch, time_step, input_dim]
+        """
+        out, _ = self.lstm(x, None)  # None表示h0会以全0初始化，及初始记忆量为0
+        """
+        out : [batch, time_step, hidden_dim]
+        """
+        out = self.fc1(out[:, -1, :])  # 此处的-1说明我们只取RNN最后输出的那个h
+        return out
+
+
+
